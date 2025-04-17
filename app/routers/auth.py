@@ -1,10 +1,11 @@
-from fastapi import APIRouter, HTTPException, Response
+from fastapi import APIRouter, HTTPException, Response , Request
 
 from app.database  import * 
 from app.schemas.auth import *
 from app.models import User
 from app.utils import *
 from app.dependencies import *
+
 
 
 router = APIRouter(tags=["Auth"])
@@ -42,10 +43,7 @@ async def registration(
 
 
 @router.post('/login')
-async def login(
-        db: db_dep, 
-        user: AuthLogin
-    ):
+async def login(db: db_dep, user: AuthLogin):
     db_user = db.query(User).filter(User.email == user.email).first()
     is_correct = verify_password(user.password, db_user.hashed_password) if db_user else False
 
@@ -55,10 +53,15 @@ async def login(
             detail="Invalid password or username."
         )
 
-    user_dict = user.model_dump()
-    
+    user_dict = {
+        "username": db_user.username,
+        "email": db_user.email,
+        "role": "admin" if db_user.is_staff else "user"
+    }
+
     access_token = create_access_token(user_dict)
     refresh_token = create_access_token(user_dict, REFRESH_TOKEN_EXPIRE_MINUTES)
+
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
@@ -67,5 +70,7 @@ async def login(
 
 
 @router.get("/test")
-async def test():
-    return {"Hello": "World"}
+async def test_view(request: Request, db: Session = Depends(get_db)):
+    user = get_current_user(request=request, db=db)
+    return {"user": user}
+    
