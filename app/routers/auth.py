@@ -69,8 +69,9 @@ async def login(db: db_dep, user: AuthLogin):
     }
 
 
-@router.get("/test")
-async def test_view(request: Request, db: Session = Depends(get_db)):
-    user = get_current_user(request=request, db=db)
-    return {"user": user}
-    
+# @router.get("/test")
+# async def test_view(request: Request, db: Session = Depends(get_db)):
+#     user = get_current_user(request=request, db=db)
+#     return {"user": user}
+
+
